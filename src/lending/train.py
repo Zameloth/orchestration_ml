@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import logging
 from pathlib import Path
 
 import joblib
+import mlflow
 import polars as pl
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
@@ -13,7 +17,9 @@ from lending import config
 from lending.data import clean
 from lending.features import build_features
 
-TRAIN_YEARS = range(2007, 2013)
+log = logging.getLogger(__name__)
+
+EXPERIMENT_NAME = config.MLFLOW_EXPERIMENT_NAME
 MODEL_PATH = config.ROOT / "data" / "models" / "baseline.joblib"
 
 
@@ -38,11 +44,12 @@ def make_pipeline() -> Pipeline:
 
 
 def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
+    log.info("Training logistic regression on %d samples", len(df))
     y = df["target"].to_numpy()
     X = build_features(df).to_pandas().to_numpy(dtype=float)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=42, stratify=y
+        X, y, test_size=test_size, random_state=config.RANDOM_STATE, stratify=y
     )
 
     pipeline = make_pipeline()
@@ -55,19 +62,27 @@ def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
         "auc_roc": roc_auc_score(y_test, y_prob),
         "report": classification_report(y_test, y_pred, target_names=["Fully Paid", "Charged Off"]),
     }
+    log.info("AUC-ROC: %.4f", metrics["auc_roc"])
+
+    mlflow.set_experiment(EXPERIMENT_NAME)
+    with mlflow.start_run(run_name="logistic_regression"):
+        mlflow.log_metric("auc_roc", metrics["auc_roc"])
+
     return pipeline, metrics
 
 
 def main() -> None:
-    df = clean(load_processed_years(TRAIN_YEARS, config.PROCESSED_DIR))
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    log.info("Loading data (%s)", config.PROCESSED_DIR)
+    df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))
     pipeline, metrics = train(df)
 
-    print(f"AUC-ROC : {metrics['auc_roc']:.4f}")
     print(metrics["report"])
 
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(pipeline, MODEL_PATH)
-    print(f"Modèle sauvegardé : {MODEL_PATH}")
+    log.info("Model saved to %s", MODEL_PATH)
 
 
 if __name__ == "__main__":

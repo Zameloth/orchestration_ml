@@ -4,6 +4,7 @@ ROOT = Path(__file__).parent.parent.parent
 
 RAW_PATH = ROOT / "data" / "raw" / "accepted_2007_to_2018Q4.csv"
 PROCESSED_DIR = ROOT / "data" / "processed"
+MODELS_DIR = ROOT / "models"
 
 NUMERIC_COLS = [
     "loan_amnt",
@@ -31,3 +32,10 @@ CAT_COLS = [
     "verification_status",
     "purpose",
 ]
+
+RANDOM_STATE = 42
+TRAIN_YEARS = range(2007, 2013)
+
+MLFLOW_TRACKING_URI = f"sqlite:///{ROOT}/mlruns/mlflow.db"
+MLFLOW_EXPERIMENT_NAME = "lending-model-comparison"
+MODEL_NAME = "lending-classifier"

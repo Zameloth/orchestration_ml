@@ -16,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from lending import config
 from lending.data import clean
 from lending.features import build_features
+from lending.tracking import log_run
 
 log = logging.getLogger(__name__)
 
@@ -64,9 +65,7 @@ def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
     }
     log.info("AUC-ROC: %.4f", metrics["auc_roc"])
 
-    mlflow.set_experiment(EXPERIMENT_NAME)
-    with mlflow.start_run(run_name="logistic_regression"):
-        mlflow.log_metric("auc_roc", metrics["auc_roc"])
+    log_run(EXPERIMENT_NAME, "logistic_regression", {"auc_roc": metrics["auc_roc"]})
 
     return pipeline, metrics
 

@@ -5,6 +5,7 @@ ROOT = Path(__file__).parent.parent.parent
 RAW_PATH = ROOT / "data" / "raw" / "accepted_2007_to_2018Q4.csv"
 PROCESSED_DIR = ROOT / "data" / "processed"
 MODELS_DIR = ROOT / "models"
+BEST_MODEL_PATH = MODELS_DIR / "best_model.joblib"
 
 NUMERIC_COLS = [
     "loan_amnt",

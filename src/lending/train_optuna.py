@@ -26,7 +26,7 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 log = logging.getLogger(__name__)
 
-BEST_MODEL_PATH = config.MODELS_DIR / "best_model.joblib"
+BEST_MODEL_PATH = config.BEST_MODEL_PATH
 
 
 def _make_pipeline(model) -> Pipeline:

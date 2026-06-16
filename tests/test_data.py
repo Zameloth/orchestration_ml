@@ -3,9 +3,11 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from lending import config
 from lending.data import clean, load_raw, split_by_year
 
 
+@pytest.mark.skipif(not config.RAW_PATH.exists(), reason="raw data file not available")
 def test_load_raw_returns_dataframe_with_loan_status():
     df = load_raw()
     assert isinstance(df, pl.DataFrame)

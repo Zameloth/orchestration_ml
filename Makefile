@@ -34,7 +34,7 @@ RESET  := $(shell printf '\033[0m')
 
 .PHONY: help \
         check-uv check-venv venv-create install sync deps-sync lock reset-env doctor \
-        data train train-models train-optuna mlflow api frontend \
+        data train train-models train-optuna evaluate mlflow api frontend \
         docker-build docker-run docker-up docker-down \
         lint format type test check
 
@@ -106,11 +106,14 @@ data: ## Prepare/genere le jeu de donnees dans data/
 train: ## Entraine la baseline -> data/models/baseline.joblib
 	$(PYTHON) -m lending.train
 
-train-models: ## Compare RF / XGBoost / LightGBM (GridSearchCV) + SHAP (CV=.. SCORING=..)
-	# TODO (S7) : $(PYTHON) -m mlproject.train_models --cv $(CV) --scoring $(SCORING)
+train-models: ## Compare RF / XGBoost / LightGBM avec CV (CV=.. SCORING=..)
+	$(PYTHON) -m lending.train_models --cv $(CV) --scoring $(SCORING)
 
 train-optuna: ## Optimise RF / XGBoost / LightGBM avec Optuna (N_TRIALS=.. CV=..)
-	# TODO (S6) : $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+	$(PYTHON) -m lending.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+
+evaluate: ## Evalue le meilleur modele sur les donnees de test
+	$(PYTHON) -m lending.evaluate
 
 mlflow: ## Lance l'UI MLflow locale (sqlite)
 	$(RUN) mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db --port $(MLFLOW_PORT)

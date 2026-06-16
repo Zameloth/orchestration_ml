@@ -35,6 +35,9 @@ CAT_COLS = [
 
 RANDOM_STATE = 42
 TRAIN_YEARS = range(2007, 2013)
+EVAL_YEARS = range(2014, 2015)
+
+MIN_AUC_ROC = 0.65
 
 MLFLOW_TRACKING_URI = f"sqlite:///{ROOT}/mlruns/mlflow.db"
 MLFLOW_EXPERIMENT_NAME = "lending-model-comparison"

@@ -26,15 +26,9 @@ log = logging.getLogger(__name__)
 BEST_MODEL_PATH = config.MODELS_DIR / "best_model.joblib"
 
 MODELS: dict[str, object] = {
-    "random_forest": RandomForestClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=-1),
+    "random_forest": RandomForestClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1),
     "xgboost": XGBClassifier(n_estimators=100, eval_metric="logloss", random_state=config.RANDOM_STATE),
-    "lightgbm": LGBMClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=-1, verbose=-1),
-}
-
-PARAM_GRIDS: dict[str, dict] = {
-    "random_forest": {"max_depth": [None, 10]},
-    "xgboost": {"max_depth": [3, 6]},
-    "lightgbm": {"max_depth": [-1, 6]},
+    "lightgbm": LGBMClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1, verbose=-1),
 }
 
 

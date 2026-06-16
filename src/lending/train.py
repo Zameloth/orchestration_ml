@@ -61,7 +61,7 @@ def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
 
     metrics = {
         "auc_roc": roc_auc_score(y_test, y_prob),
-        "report": classification_report(y_test, y_pred, target_names=["Fully Paid", "Charged Off"]),
+        "report": classification_report(y_test, y_pred, target_names=["Fully Paid", "Charged Off"], zero_division=0),
     }
     log.info("AUC-ROC: %.4f", metrics["auc_roc"])
 

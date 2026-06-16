@@ -61,7 +61,9 @@ def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
 
     metrics = {
         "auc_roc": roc_auc_score(y_test, y_prob),
-        "report": classification_report(y_test, y_pred, target_names=["Fully Paid", "Charged Off"], zero_division=0),
+        "report": classification_report(
+            y_test, y_pred, target_names=["Fully Paid", "Charged Off"], zero_division=0
+        ),
     }
     log.info("AUC-ROC: %.4f", metrics["auc_roc"])
 
@@ -71,7 +73,9 @@ def train(df: pl.DataFrame, test_size: float = 0.2) -> tuple[Pipeline, dict]:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s"
+    )
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     log.info("Loading data (%s)", config.PROCESSED_DIR)
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))

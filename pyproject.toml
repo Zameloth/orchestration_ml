@@ -20,6 +20,7 @@ dependencies = [
   "python-dotenv>=1.0",
   "streamlit>=1.30",
   "httpx>=0.27",
+  "httpx2>=2.4.0",
   "numba>=0.61",
   "llvmlite>=0.44",
   "sqlalchemy>=2.0",

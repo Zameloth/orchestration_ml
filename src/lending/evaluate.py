@@ -36,7 +36,9 @@ def evaluate(
         "f1_charged_off": float(f1_score(y, y_pred)),
     }
 
-    log.info("AUC-ROC: %.4f | F1 (Charged Off): %.4f", metrics["auc_roc"], metrics["f1_charged_off"])
+    log.info(
+        "AUC-ROC: %.4f | F1 (Charged Off): %.4f", metrics["auc_roc"], metrics["f1_charged_off"]
+    )
     log_run(experiment_name, "evaluate", metrics)
 
     if metrics["auc_roc"] < min_auc:
@@ -48,7 +50,9 @@ def evaluate(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s"
+    )
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
 
     pipeline = joblib.load(MODEL_PATH)

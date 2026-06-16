@@ -26,18 +26,26 @@ log = logging.getLogger(__name__)
 BEST_MODEL_PATH = config.MODELS_DIR / "best_model.joblib"
 
 MODELS: dict[str, object] = {
-    "random_forest": RandomForestClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1),
-    "xgboost": XGBClassifier(n_estimators=100, eval_metric="logloss", random_state=config.RANDOM_STATE),
-    "lightgbm": LGBMClassifier(n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1, verbose=-1),
+    "random_forest": RandomForestClassifier(
+        n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1
+    ),
+    "xgboost": XGBClassifier(
+        n_estimators=100, eval_metric="logloss", random_state=config.RANDOM_STATE
+    ),
+    "lightgbm": LGBMClassifier(
+        n_estimators=100, random_state=config.RANDOM_STATE, n_jobs=1, verbose=-1
+    ),
 }
 
 
 def _make_pipeline(model) -> Pipeline:
-    return Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-        ("model", model),
-    ])
+    return Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+            ("model", model),
+        ]
+    ).set_output(transform="pandas")
 
 
 def compare_models(
@@ -92,7 +100,9 @@ def compare_models(
 
 
 def main(cv: int = 5, scoring: str = "roc_auc") -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s"
+    )
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     log.info("Loading data (%s)", config.PROCESSED_DIR)
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))

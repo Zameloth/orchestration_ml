@@ -66,6 +66,7 @@ def health():
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(loan: LoanApplication):
+    assert _pipeline is not None
     df = pl.DataFrame([loan.model_dump()])
     X = build_features(df).to_pandas().to_numpy(dtype=float)
     prob = float(_pipeline.predict_proba(X)[0, 1])

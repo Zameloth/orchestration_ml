@@ -30,11 +30,13 @@ BEST_MODEL_PATH = config.BEST_MODEL_PATH
 
 
 def _make_pipeline(model) -> Pipeline:
-    return Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-        ("model", model),
-    ])
+    return Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+            ("model", model),
+        ]
+    ).set_output(transform="pandas")
 
 
 def _objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray, cv: int) -> float:
@@ -140,10 +142,13 @@ def tune(
         )
 
     study = optuna.create_study(direction="maximize")
-    study.optimize(lambda trial: _objective(trial, X, y, cv), n_trials=n_trials, callbacks=[_log_trial])
+    study.optimize(
+        lambda trial: _objective(trial, X, y, cv), n_trials=n_trials, callbacks=[_log_trial]
+    )
 
     best = study.best_trial
     log.info("Best trial — model: %s, AUC-ROC: %.4f", best.params.get("model"), best.value)
+    assert best.value is not None
     log_run(experiment_name, "optuna_best", {"auc_roc": best.value})
 
     best_pipeline = _make_pipeline(_build_model(best.params))
@@ -152,7 +157,9 @@ def tune(
 
 
 def main(n_trials: int = 50, cv: int = 3) -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s"
+    )
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
 
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))

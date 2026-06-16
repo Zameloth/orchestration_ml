@@ -146,22 +146,3 @@ def test_main_saves_best_model(tmp_path: Path, monkeypatch):
 
     assert model_path.exists()
 
-
-# ---------------------------------------------------------------------------
-# Cycle 6 — parent run for best model has a SHAP artifact
-# ---------------------------------------------------------------------------
-
-
-def test_best_model_parent_run_has_shap_artifact(training_df):
-    _, best_name, _ = compare_models(training_df, cv=2, experiment_name="test-experiment")
-
-    experiment = mlflow.get_experiment_by_name("test-experiment")
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        filter_string=f"tags.mlflow.runName = '{best_name}' AND tags.mlflow.parentRunId IS NULL",
-    )
-    assert len(runs) == 1
-    run_id = runs.iloc[0]["run_id"]
-    artifacts = mlflow.MlflowClient().list_artifacts(run_id)
-    artifact_names = [a.path for a in artifacts]
-    assert any("shap" in name for name in artifact_names)

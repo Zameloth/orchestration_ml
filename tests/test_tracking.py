@@ -3,10 +3,6 @@ from pathlib import Path
 import mlflow
 import numpy as np
 import pytest
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 from lending.tracking import log_cv_run, log_run
 
@@ -24,20 +20,6 @@ def isolated_mlflow(tmp_path: Path, monkeypatch):
         client.create_experiment(name, artifact_location=artifact_root)
     yield
     mlflow.set_tracking_uri(None)
-
-
-@pytest.fixture()
-def rf_pipeline_and_data() -> tuple[Pipeline, np.ndarray, list[float]]:
-    rng = np.random.default_rng(42)
-    X = rng.standard_normal((60, 5))
-    y = (rng.standard_normal(60) > 0).astype(int)
-    pipeline = Pipeline([
-        ("imputer", SimpleImputer()),
-        ("scaler", StandardScaler()),
-        ("model", RandomForestClassifier(n_estimators=5, random_state=42)),
-    ])
-    pipeline.fit(X, y)
-    return pipeline, X, [0.70, 0.72, 0.68]
 
 
 # ---------------------------------------------------------------------------
@@ -72,9 +54,9 @@ def test_log_run_uses_run_name():
 # ---------------------------------------------------------------------------
 
 
-def test_log_cv_run_parent_run_has_mean_and_std(rf_pipeline_and_data):
-    pipeline, X, fold_aucs = rf_pipeline_and_data
-    log_cv_run("test-cv", "random_forest", fold_aucs, pipeline, X)
+def test_log_cv_run_parent_run_has_mean_and_std():
+    fold_aucs = [0.70, 0.72, 0.68]
+    log_cv_run("test-cv", "random_forest", fold_aucs)
 
     experiment = mlflow.get_experiment_by_name("test-cv")
     runs = mlflow.search_runs(
@@ -91,9 +73,9 @@ def test_log_cv_run_parent_run_has_mean_and_std(rf_pipeline_and_data):
 # ---------------------------------------------------------------------------
 
 
-def test_log_cv_run_creates_child_run_per_fold(rf_pipeline_and_data):
-    pipeline, X, fold_aucs = rf_pipeline_and_data
-    log_cv_run("test-cv", "random_forest", fold_aucs, pipeline, X)
+def test_log_cv_run_creates_child_run_per_fold():
+    fold_aucs = [0.70, 0.72, 0.68]
+    log_cv_run("test-cv", "random_forest", fold_aucs)
 
     experiment = mlflow.get_experiment_by_name("test-cv")
     child_runs = mlflow.search_runs(
@@ -103,22 +85,3 @@ def test_log_cv_run_creates_child_run_per_fold(rf_pipeline_and_data):
     assert len(child_runs) == len(fold_aucs)
     for _, row in child_runs.iterrows():
         assert 0.0 <= row["metrics.auc_roc"] <= 1.0
-
-
-# ---------------------------------------------------------------------------
-# Cycle 5 — log_cv_run logs a SHAP artifact on the parent run
-# ---------------------------------------------------------------------------
-
-
-def test_log_cv_run_has_shap_artifact(rf_pipeline_and_data):
-    pipeline, X, fold_aucs = rf_pipeline_and_data
-    log_cv_run("test-cv", "random_forest", fold_aucs, pipeline, X)
-
-    experiment = mlflow.get_experiment_by_name("test-cv")
-    runs = mlflow.search_runs(
-        experiment_ids=[experiment.experiment_id],
-        filter_string="tags.mlflow.parentRunId IS NULL",
-    )
-    run_id = runs.iloc[0]["run_id"]
-    artifacts = mlflow.MlflowClient().list_artifacts(run_id)
-    assert any("shap" in a.path for a in artifacts)

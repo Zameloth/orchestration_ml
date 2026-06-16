@@ -83,7 +83,7 @@ def compare_models(
         full_pipeline = _make_pipeline(model)
         full_pipeline.fit(X, y)
 
-        log_cv_run(experiment_name, name, fold_aucs, full_pipeline, X)
+        log_cv_run(experiment_name, name, fold_aucs)
 
         results[name] = {"mean_auc_roc": mean_auc, "fold_aucs": fold_aucs}
 

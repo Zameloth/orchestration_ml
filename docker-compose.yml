@@ -27,7 +27,7 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      - models_data:/app/models:ro
+      - ./models:/app/models:ro
     environment:
       MODEL_PATH: /app/models/best_model.joblib
     healthcheck:
@@ -38,6 +38,18 @@ services:
       start_period: 15s
     depends_on:
       - mlflow
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "${FRONTEND_PORT:-8501}:8501"
+    environment:
+      API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   mlflow_data:

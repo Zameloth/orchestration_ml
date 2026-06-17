@@ -134,7 +134,7 @@ api: ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
 	$(RUN) uvicorn lending.api:app --reload --host $(API_HOST) --port $(API_PORT)
 
 frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT, API_URL)
-	# TODO (S14bis) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
+	$(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
 
 
 # ==============================================================================
@@ -147,8 +147,8 @@ docker-build: ## Construit les images (train + api)
 docker-run: ## Lance l'entrainement one-shot (profil train)
 	docker compose -f docker-compose.yml --profile train run --rm train
 
-docker-up: ## Demarre la stack (mlflow + api)
-	docker compose -f docker-compose.yml up -d mlflow api
+docker-up: ## Demarre la stack (mlflow + api + frontend)
+	docker compose -f docker-compose.yml up -d mlflow api frontend
 
 docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 	docker compose -f docker-compose.yml down

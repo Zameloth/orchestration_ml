@@ -1,0 +1,11 @@
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.git/
+data/
+mlruns/
+models/
+tests/
+.claude/

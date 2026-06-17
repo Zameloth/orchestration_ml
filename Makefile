@@ -100,8 +100,20 @@ doctor: check-uv check-venv ## Diagnostique l'environnement de travail
 # Pipeline ML  [A COMPLETER]
 # ==============================================================================
 
-data: ## Prepare/genere le jeu de donnees dans data/
-	# TODO (S0) : appeler votre script de preparation de donnees
+RAW_CSV := data/raw/accepted_2007_to_2018Q4.csv
+
+data: $(RAW_CSV) ## Telecharge et extrait le dataset Lending Club (Kaggle)
+
+$(RAW_CSV):
+	@echo "$(YELLOW)>> Telechargement du dataset Lending Club...$(RESET)"
+	@command -v kaggle >/dev/null 2>&1 || { \
+		echo "$(RED)[ERREUR] kaggle CLI absent. Installe-le : pip install kaggle$(RESET)"; \
+		echo "  Puis configure ~/.kaggle/kaggle.json (https://www.kaggle.com/docs/api)"; \
+		exit 1; \
+	}
+	mkdir -p data/raw
+	kaggle datasets download -d wordsforthewise/lending-club -p data/raw/ --unzip
+	@echo "$(GREEN)[OK] Dataset disponible : $(RAW_CSV)$(RESET)"
 
 train: ## Entraine la baseline -> data/models/baseline.joblib
 	$(PYTHON) -m lending.train

@@ -1,0 +1,21 @@
+loan_status,loan_amnt,int_rate,installment,annual_inc,dti,delinq_2yrs,fico_range_low,fico_range_high,inq_last_6mths,open_acc,pub_rec,revol_bal,revol_util,total_acc,term,grade,sub_grade,emp_length,home_ownership,verification_status,purpose
+Fully Paid,1000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,2000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,3000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,4000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,5000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,6000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,7000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,8000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,9000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,10000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,11000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,12000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,13000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,14000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,15000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,16000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,17000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,18000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Fully Paid,19000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation
+Charged Off,20000.0,10.0,200.0,50000.0,15.0,0.0,700.0,704.0,1.0,10.0,0.0,5000.0,30.0,20.0, 36 months,A,A1,2 years,RENT,Verified,debt_consolidation

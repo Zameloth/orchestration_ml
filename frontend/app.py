@@ -1,6 +1,7 @@
 import os
 
 import httpx
+import pandas as pd
 import streamlit as st
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
@@ -22,7 +23,80 @@ _PURPOSE = [
 
 st.title("Lending Club — Prédiction de défaut")
 
-tab_pred, tab_hist = st.tabs(["Prédiction", "Historique"])
+tab_home, tab_pred, tab_hist = st.tabs(["Accueil", "Prédiction", "Historique"])
+
+with tab_home:
+    st.header("Problématique métier")
+    st.markdown(
+        """
+        **LendingClub** est une plateforme américaine de prêt entre particuliers (*peer-to-peer lending*).
+        Les emprunteurs soumettent une demande de prêt, et des investisseurs particuliers financent ces prêts
+        en échange d'intérêts. Le risque principal pour l'investisseur est le **défaut de paiement** :
+        l'emprunteur ne rembourse pas son prêt.
+
+        L'enjeu est considérable : sur les données 2007–2018, environ **20 % des prêts accordés**
+        se terminent en défaut (*charged off*), représentant des pertes significatives pour les investisseurs.
+
+        **Objectif de ce projet :** construire un modèle de classification binaire capable de prédire,
+        à partir des caractéristiques d'un dossier de prêt, si l'emprunteur fera défaut —
+        permettant ainsi de mieux sélectionner les prêts à financer.
+        """
+    )
+
+    st.divider()
+    st.header("Le dataset")
+    st.markdown(
+        """
+        Les données proviennent du dataset public **Lending Club** disponible sur Kaggle.
+        Il regroupe l'ensemble des prêts émis entre **2007 et 2018**.
+        """
+    )
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Prêts enregistrés", "2 260 668")
+    col2.metric("Variables disponibles", "~150")
+    col3.metric("Taux de défaut", "~20 %")
+
+    st.markdown(
+        """
+        Les variables clés utilisées pour la prédiction :
+
+        | Variable | Description |
+        |---|---|
+        | `loan_amnt` | Montant du prêt demandé |
+        | `int_rate` | Taux d'intérêt appliqué |
+        | `fico_range_low/high` | Score de crédit FICO de l'emprunteur |
+        | `dti` | Ratio dette / revenu annuel |
+        | `annual_inc` | Revenu annuel déclaré |
+        | `grade` / `sub_grade` | Note de risque attribuée par LendingClub |
+        | `purpose` | Motif du prêt (consolidation de dettes, immobilier…) |
+        | `delinq_2yrs` | Nombre d'incidents de paiement sur 2 ans |
+        """
+    )
+
+    st.divider()
+    st.header("Approche Machine Learning")
+    st.markdown(
+        """
+        Le pipeline comprend les étapes suivantes :
+        1. **Préparation des données** — nettoyage, encodage des variables catégorielles, normalisation
+        2. **Entraînement** — comparaison de 4 modèles en validation croisée 5-fold
+        3. **Sélection** — le meilleur modèle (AUC-ROC) est enregistré via **MLflow** et exposé par l'API
+        4. **Serving** — API FastAPI + interface Streamlit (cette application)
+        """
+    )
+
+    st.subheader("Comparaison des modèles (AUC-ROC, CV 5-fold)")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("LightGBM", "0.689", delta="meilleur", delta_color="normal")
+    m2.metric("Logistic Reg.", "0.684")
+    m3.metric("XGBoost", "0.671")
+    m4.metric("Random Forest", "0.666")
+
+    chart_data = pd.DataFrame(
+        {"AUC-ROC": [0.689, 0.684, 0.671, 0.666]},
+        index=["LightGBM", "Logistic Reg.", "XGBoost", "Random Forest"],
+    )
+    st.bar_chart(chart_data)
 
 with tab_pred:
     with st.form("prediction_form"):

@@ -33,8 +33,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Calcul des tags et labels
-        id: meta
+      - name: Calcul des tags et labels (api)
+        id: meta-api
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}/mlproject-api
@@ -43,13 +43,34 @@ jobs:
             type=sha
             type=semver,pattern={{version}}
 
-      - name: Build & push de l'image
+      - name: Build & push de l'image api
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile.api
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Calcul des tags et labels (frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/mlproject-frontend
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+
+      - name: Build & push de l'image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

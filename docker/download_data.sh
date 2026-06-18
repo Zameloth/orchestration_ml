@@ -7,14 +7,21 @@ PROCESSED_CHECK=/data/processed/2007.csv
 if [ ! -f "$RAW_CSV" ]; then
     mkdir -p /data/raw
     kaggle datasets download -d wordsforthewise/lending-club -p /data/raw/ --unzip
-    # Le zip peut extraire dans un sous-dossier — on cherche le CSV et on le remonte
-    ACTUAL=$(find /data/raw -iname "accepted_2007_to_2018q4.csv" ! -type d | head -1)
-    if [ -z "$ACTUAL" ]; then
+
+    # Kaggle peut extraire dans un dossier portant le même nom que le CSV
+    if [ -d "$RAW_CSV" ]; then
+        ACTUAL=$(find "$RAW_CSV" -iname "accepted_2007_to_2018q4.csv" ! -type d | head -1)
+        [ -z "$ACTUAL" ] && ACTUAL=$(find "$RAW_CSV" -name "*.csv" ! -type d | head -1)
+        cp "$ACTUAL" /tmp/lending_raw.csv
+        rm -rf "$RAW_CSV"
+        mv /tmp/lending_raw.csv "$RAW_CSV"
+    fi
+
+    if [ ! -f "$RAW_CSV" ]; then
         echo "[ERROR] CSV introuvable après extraction :" >&2
         find /data/raw -maxdepth 3 >&2
         exit 1
     fi
-    [ "$ACTUAL" != "$RAW_CSV" ] && mv "$ACTUAL" "$RAW_CSV"
     echo "[OK] Données téléchargées : $RAW_CSV"
 else
     echo "[OK] Raw data déjà présente, skip download."

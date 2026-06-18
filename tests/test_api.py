@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-import joblib
+import mlflow
+import mlflow.sklearn
 import polars as pl
 import pytest
 from sklearn.impute import SimpleImputer
@@ -44,7 +43,7 @@ def _make_df(n_rows: int = 40) -> pl.DataFrame:
 
 
 @pytest.fixture()
-def model_path(tmp_path: Path) -> Path:
+def client(monkeypatch) -> TestClient:
     df = _make_df()
     X = build_features(df).to_pandas().to_numpy(dtype=float)
     y = df["target"].to_numpy()
@@ -54,15 +53,10 @@ def model_path(tmp_path: Path) -> Path:
         ("model", LogisticRegression(max_iter=1000)),
     ])
     pipeline.fit(X, y)
-    path = tmp_path / "best_model.joblib"
-    joblib.dump(pipeline, path)
-    return path
 
+    monkeypatch.setattr(mlflow, "set_tracking_uri", lambda _: None)
+    monkeypatch.setattr(mlflow.sklearn, "load_model", lambda _: pipeline)
 
-@pytest.fixture()
-def client(model_path: Path, monkeypatch) -> TestClient:
-    import lending.api as api_module
-    monkeypatch.setattr(api_module, "MODEL_PATH", model_path)
     from lending.api import app
     with TestClient(app) as c:
         yield c

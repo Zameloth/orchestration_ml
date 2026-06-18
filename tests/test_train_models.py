@@ -130,7 +130,7 @@ def test_compare_models_child_runs_per_fold(training_df):
 # ---------------------------------------------------------------------------
 
 
-def test_main_saves_best_model(tmp_path: Path, monkeypatch):
+def test_main_registers_best_model(tmp_path: Path, monkeypatch):
     import lending.train_models as tm
 
     data_dir = tmp_path / "processed"
@@ -138,11 +138,12 @@ def test_main_saves_best_model(tmp_path: Path, monkeypatch):
     for year in range(2007, 2013):
         _write_year_csv(data_dir, year, n_rows=20)
 
-    model_path = tmp_path / "models" / "best_model.joblib"
     monkeypatch.setattr(tm.config, "PROCESSED_DIR", data_dir)
-    monkeypatch.setattr(tm, "BEST_MODEL_PATH", model_path)
 
     tm.main(cv=2)
 
-    assert model_path.exists()
+    champion = mlflow.MlflowClient().get_model_version_by_alias(
+        tm.config.MODEL_NAME, "champion"
+    )
+    assert champion is not None
 

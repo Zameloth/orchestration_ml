@@ -66,9 +66,10 @@ def test_tune_returns_fitted_pipeline(training_df):
     import numpy as np
     from lending.features import build_features
 
-    pipeline = tune(training_df, n_trials=2, cv=2)
+    pipeline, auc_roc = tune(training_df, n_trials=2, cv=2)
 
     assert isinstance(pipeline, Pipeline)
+    assert isinstance(auc_roc, float)
     X = build_features(training_df).to_pandas().to_numpy(dtype=float)
     probs = pipeline.predict_proba(X)[:, 1]
     assert probs.shape == (len(training_df),)
@@ -95,7 +96,7 @@ def test_tune_logs_best_trial_to_mlflow(training_df):
 # ---------------------------------------------------------------------------
 
 
-def test_main_saves_best_model(tmp_path: Path, monkeypatch):
+def test_main_registers_best_model(tmp_path: Path, monkeypatch):
     import lending.train_optuna as tm
 
     data_dir = tmp_path / "processed"
@@ -103,10 +104,11 @@ def test_main_saves_best_model(tmp_path: Path, monkeypatch):
     for year in range(2007, 2013):
         _write_year_csv(data_dir, year, n_rows=20)
 
-    model_path = tmp_path / "models" / "best_model.joblib"
     monkeypatch.setattr(tm.config, "PROCESSED_DIR", data_dir)
-    monkeypatch.setattr(tm, "BEST_MODEL_PATH", model_path)
 
     main(n_trials=2, cv=2)
 
-    assert model_path.exists()
+    champion = mlflow.MlflowClient().get_model_version_by_alias(
+        tm.config.MODEL_NAME, "champion"
+    )
+    assert champion is not None

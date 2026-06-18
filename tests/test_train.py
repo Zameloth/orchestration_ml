@@ -54,22 +54,22 @@ def _write_year_csv(directory: Path, year: int, n_rows: int = 3) -> None:
 # --- main ---
 
 
-def test_main_saves_model_to_disk(tmp_path, monkeypatch):
+def test_main_registers_model_to_mlflow(tmp_path, monkeypatch):
     data_dir = tmp_path / "processed"
     data_dir.mkdir()
     for year in range(2007, 2013):
         _write_year_csv(data_dir, year, n_rows=20)
 
-    model_path = tmp_path / "models" / "baseline.joblib"
-
-    monkeypatch.setattr(train_module, "MODEL_PATH", model_path)
     monkeypatch.setattr(train_module.config, "PROCESSED_DIR", data_dir)
     monkeypatch.setattr(train_module.config, "TRAIN_YEARS", range(2007, 2013))
     monkeypatch.setattr(train_module, "clean", clean)
 
     main()
 
-    assert model_path.exists()
+    champion = mlflow.MlflowClient().get_model_version_by_alias(
+        train_module.config.MODEL_NAME, "champion"
+    )
+    assert champion is not None
 
 
 # --- load_processed_years ---

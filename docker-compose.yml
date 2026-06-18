@@ -21,9 +21,7 @@ services:
       - mlflow
 
   api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.api
+    image: ghcr.io/zameloth/orchestration_ml/mlproject-api:latest
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
@@ -40,9 +38,7 @@ services:
       - mlflow
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.frontend
+    image: ghcr.io/zameloth/orchestration_ml/mlproject-frontend:latest
     ports:
       - "${FRONTEND_PORT:-8501}:8501"
     environment:

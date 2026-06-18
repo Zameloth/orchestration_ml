@@ -27,6 +27,8 @@ with st.sidebar:
     st.header("Services")
     st.link_button("Documentation API", API_DOCS_URL, use_container_width=True)
     st.link_button("MLflow", MLFLOW_URL, use_container_width=True)
+    st.divider()
+    st.caption("Réalisé par **Théo ELOY**")
 
 st.title("Lending Club — Prédiction de défaut")
 

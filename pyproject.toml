@@ -2,7 +2,7 @@
 name = "mlops-lending-club"
 version = "0.1.0"
 description = "Projet fil rouge - Orchestration Machine Learning (ESGI)"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
   "scikit-learn>=1.4",
   "pandas>=2.0",

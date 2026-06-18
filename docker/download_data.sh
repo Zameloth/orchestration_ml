@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-RAW_CSV=/data/raw/accepted_2007_to_2018Q4.csv
+RAW_CSV=/data/raw/accepted_2007_to_2018q4.csv
 PROCESSED_CHECK=/data/processed/2007.csv
 
 if [ ! -f "$RAW_CSV" ]; then
@@ -17,7 +17,7 @@ if [ ! -f "$PROCESSED_CHECK" ]; then
     python - <<'EOF'
 from pathlib import Path
 from lending.data import load_raw, clean, split_by_year
-df = load_raw(Path("/data/raw/accepted_2007_to_2018Q4.csv"))
+df = load_raw(Path("/data/raw/accepted_2007_to_2018q4.csv"))
 df = clean(df)
 split_by_year(df, Path("/data/processed"))
 print("[OK] Split terminé.")

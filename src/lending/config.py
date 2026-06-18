@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent
 
-RAW_PATH = ROOT / "data" / "raw" / "accepted_2007_to_2018Q4.csv"
+RAW_PATH = ROOT / "data" / "raw" / "accepted_2007_to_2018q4.csv"
 PROCESSED_DIR = ROOT / "data" / "processed"
 MODELS_DIR = ROOT / "models"
 BEST_MODEL_PATH = Path(os.environ.get("MODEL_PATH", str(MODELS_DIR / "best_model.joblib")))

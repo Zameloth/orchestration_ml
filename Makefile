@@ -100,7 +100,7 @@ doctor: check-uv check-venv ## Diagnostique l'environnement de travail
 # Pipeline ML  [A COMPLETER]
 # ==============================================================================
 
-RAW_CSV := data/raw/accepted_2007_to_2018Q4.csv
+RAW_CSV := data/raw/accepted_2007_to_2018q4.csv
 
 data: $(RAW_CSV) ## Telecharge et extrait le dataset Lending Club (Kaggle)
 

@@ -1,3 +1,20 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.airflow
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:${AIRFLOW_PG_PASSWORD:-airflow}@postgres-airflow/airflow"
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./data:/app/data
+    - models_data:/app/models
+    - airflow_logs:/opt/airflow/logs
+  profiles: [airflow]
+
 services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
@@ -63,7 +80,59 @@ services:
       api:
         condition: service_healthy
 
+  postgres-airflow:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: ${AIRFLOW_PG_PASSWORD:-airflow}
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    profiles: [airflow]
+
+  airflow-init:
+    <<: *airflow-common
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+    command: >
+      bash -c "airflow db migrate &&
+               { airflow users create --username admin --firstname Admin --lastname User
+                 --role Admin --email admin@example.com
+                 --password $${AIRFLOW_ADMIN_PASSWORD:-admin} || true; }"
+
+  airflow-webserver:
+    <<: *airflow-common
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    ports:
+      - "${AIRFLOW_PORT:-8080}:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  airflow-scheduler:
+    <<: *airflow-common
+    depends_on:
+      postgres-airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: scheduler
+
 volumes:
   mlflow_data:
   models_data:
   predictions_data:
+  airflow_pg_data:
+  airflow_logs:

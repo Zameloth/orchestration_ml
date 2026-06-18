@@ -24,6 +24,12 @@ services:
     volumes:
       - mlflow_data:/mlruns
     command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --host 0.0.0.0 --port 5000 --allowed-hosts '*'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   data:
     build:
@@ -49,7 +55,8 @@ services:
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
 
   api:
     image: ghcr.io/zameloth/orchestration_ml/mlproject-api:latest
@@ -67,7 +74,8 @@ services:
       retries: 3
       start_period: 15s
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
 
   frontend:
     image: ghcr.io/zameloth/orchestration_ml/mlproject-frontend:latest

@@ -53,7 +53,7 @@ def register_model(
     except mlflow.exceptions.MlflowException:
         champion_auc = -1.0
 
-    if auc_roc > champion_auc:
+    if auc_roc >= champion_auc:
         client.set_registered_model_alias(config.MODEL_NAME, "champion", mv.version)
         log.info(
             "New champion: version %s (AUC-ROC: %.4f > %.4f)", mv.version, auc_roc, champion_auc

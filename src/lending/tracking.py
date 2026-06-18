@@ -38,7 +38,17 @@ def register_model(
     mlflow.set_experiment(experiment_name)
     with mlflow.start_run(run_name=run_name) as run:
         mlflow.log_metric("auc_roc", auc_roc)
-        mlflow.sklearn.log_model(pipeline, "model")
+        mlflow.sklearn.log_model(
+            pipeline,
+            "model",
+            skops_trusted_types=[
+                "numpy.dtype",
+                "xgboost.core.Booster",
+                "xgboost.sklearn.XGBClassifier",
+                "lightgbm.sklearn.LGBMClassifier",
+                "sklearn.ensemble._forest.RandomForestClassifier",
+            ],
+        )
 
     mv = mlflow.register_model(f"runs:/{run.info.run_id}/model", config.MODEL_NAME)
 

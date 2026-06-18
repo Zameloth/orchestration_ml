@@ -45,8 +45,11 @@ def register_model(
     client = mlflow.MlflowClient()
     try:
         champion = client.get_model_version_by_alias(config.MODEL_NAME, "champion")
-        champion_run = client.get_run(champion.run_id)
-        champion_auc = champion_run.data.metrics.get("auc_roc", -1.0)
+        if champion.run_id is not None:
+            champion_run = client.get_run(champion.run_id)
+            champion_auc = float(champion_run.data.metrics.get("auc_roc", -1.0))
+        else:
+            champion_auc = -1.0
     except mlflow.exceptions.MlflowException:
         champion_auc = -1.0
 

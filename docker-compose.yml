@@ -2,6 +2,7 @@ x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: docker/Dockerfile.airflow
+  image: ghcr.io/${GITHUB_REPOSITORY:-zameloth/orchestration_ml}/mlproject-airflow:latest
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:${AIRFLOW_PG_PASSWORD:-airflow}@postgres-airflow/airflow"

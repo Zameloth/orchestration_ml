@@ -197,6 +197,14 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Prépare le dossier dags sur le VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: rm -rf ~/app/dags && mkdir -p ~/app/dags
+
       - name: Copie du docker-compose sur le VPS
         uses: appleboy/scp-action@v0.1.7
         with:

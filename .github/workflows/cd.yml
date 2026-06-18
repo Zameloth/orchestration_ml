@@ -75,6 +75,48 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Calcul des tags et labels (train)
+        id: meta-train
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/mlproject-train
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+
+      - name: Build & push de l'image train
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.train
+          push: true
+          tags: ${{ steps.meta-train.outputs.tags }}
+          labels: ${{ steps.meta-train.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Calcul des tags et labels (data)
+        id: meta-data
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/mlproject-data
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+
+      - name: Build & push de l'image data
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.data
+          push: true
+          tags: ${{ steps.meta-data.outputs.tags }}
+          labels: ${{ steps.meta-data.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-push
@@ -99,8 +141,13 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: KAGGLE_TKN
           script: |
             cd ~/app
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose pull
+            KAGGLE_TKN="$KAGGLE_TKN" docker compose --profile data run --rm data
+            docker compose --profile train run --rm train
             docker compose up -d --remove-orphans
+        env:
+          KAGGLE_TKN: ${{ secrets.KAGGLE_TKN }}

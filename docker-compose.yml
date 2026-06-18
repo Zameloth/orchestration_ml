@@ -7,10 +7,16 @@ services:
       - mlflow_data:/mlruns
     command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --host 0.0.0.0 --port 5000 --allowed-hosts '*'
 
+  data:
+    image: ghcr.io/${GITHUB_REPOSITORY:-zameloth/orchestration_ml}/mlproject-data:latest
+    profiles: [data]
+    volumes:
+      - ./data:/data
+    environment:
+      KAGGLE_TKN: ${KAGGLE_TKN}
+
   train:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.train
+    image: ghcr.io/${GITHUB_REPOSITORY:-zameloth/orchestration_ml}/mlproject-train:latest
     profiles: [train]
     volumes:
       - models_data:/app/models

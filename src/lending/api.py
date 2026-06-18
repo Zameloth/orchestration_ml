@@ -41,9 +41,7 @@ def _init_db() -> None:
         )
 
 
-def _save_prediction(
-    loan: LoanApplication, prob: float, label: str
-) -> None:
+def _save_prediction(loan: LoanApplication, prob: float, label: str) -> None:
     with sqlite3.connect(_DB_PATH) as conn:
         conn.execute(
             """
@@ -179,7 +177,5 @@ def get_predictions():
     """Retourne toutes les prédictions passées, de la plus récente à la plus ancienne."""
     with sqlite3.connect(_DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
-        rows = conn.execute(
-            "SELECT * FROM predictions ORDER BY id DESC"
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM predictions ORDER BY id DESC").fetchall()
     return [dict(row) for row in rows]

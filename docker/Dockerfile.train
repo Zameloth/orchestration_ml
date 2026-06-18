@@ -11,7 +11,7 @@ RUN uv sync --no-dev --frozen --no-install-project
 
 COPY src/ ./src/
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/src
 ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["python", "-m", "lending.train_optuna"]

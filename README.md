@@ -27,3 +27,33 @@ make mlflow        # Démarre le serveur MLflow
 make api           # Lance l'API FastAPI
 make frontend      # Lance le frontend Streamlit
 ```
+
+## Deploy local (équivalent CD)
+
+Reproduit en local le pipeline complet de la CI/CD : build des images Docker, téléchargement des données, entraînement, puis démarrage de la stack complète (MLflow, API, Streamlit, Airflow).
+
+**Prérequis :** copier `.env.example` en `.env` et renseigner les credentials Kaggle.
+
+```bash
+cp .env.example .env
+# éditer .env : renseigner KAGGLE_USER et KAGGLE_TKN
+
+make deploy-local
+```
+
+Une fois la stack démarrée :
+
+| Service  | URL                        |
+|----------|----------------------------|
+| MLflow   | http://localhost:5000       |
+| API      | http://localhost:8000       |
+| Frontend | http://localhost:8501       |
+| Airflow  | http://localhost:8080       |
+
+Pour arrêter la stack :
+
+```bash
+make deploy-down
+```
+
+> **Note :** `make deploy-local-build` construit uniquement les images sans lancer le pipeline, utile pour vérifier que les Dockerfiles compilent correctement.

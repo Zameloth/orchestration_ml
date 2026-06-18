@@ -17,6 +17,8 @@ API_HOST     ?= 127.0.0.1
 API_PORT     ?= 8000
 FRONTEND_PORT ?= 8501
 MLFLOW_PORT  := 5000
+AIRFLOW_PORT ?= 8080
+REPO         ?= zameloth/orchestration_ml
 C            ?= 1.0
 MAX_ITER     ?= 1000
 CV           ?= 5
@@ -36,6 +38,7 @@ RESET  := $(shell printf '\033[0m')
         check-uv check-venv venv-create install sync deps-sync lock reset-env doctor \
         data train train-models train-optuna evaluate mlflow api frontend \
         docker-build docker-run docker-up docker-down \
+        deploy-local-build deploy-local deploy-down \
         lint format type test check
 
 
@@ -152,6 +155,34 @@ docker-up: ## Demarre la stack (mlflow + api + frontend)
 
 docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 	docker compose -f docker-compose.yml down
+
+
+# ==============================================================================
+# Deploy local  (équivalent CD)
+# ==============================================================================
+
+deploy-local-build: ## Construit toutes les images Docker en local
+	@echo "$(YELLOW)>> Build des images Docker...$(RESET)"
+	docker build -f docker/Dockerfile.api      -t ghcr.io/$(REPO)/mlproject-api:latest      .
+	docker build -f docker/Dockerfile.frontend -t ghcr.io/$(REPO)/mlproject-frontend:latest .
+	docker compose build
+	@echo "$(GREEN)[OK] Images construites$(RESET)"
+
+deploy-local: deploy-local-build ## Deploy complet en local : build → data → train → stack (airflow + api + frontend)
+	@echo "$(YELLOW)>> Pipeline data (KAGGLE_USER + KAGGLE_TKN depuis .env requis)...$(RESET)"
+	docker compose --profile data run --rm data
+	@echo "$(YELLOW)>> Entrainement du modele...$(RESET)"
+	docker compose --profile train run --rm train
+	@echo "$(YELLOW)>> Demarrage de la stack (mlflow + api + frontend + airflow)...$(RESET)"
+	docker compose --profile airflow up -d --remove-orphans
+	@echo "$(GREEN)[OK] Deploy local termine$(RESET)"
+	@printf "  MLflow   : http://localhost:$(MLFLOW_PORT)\n"
+	@printf "  API      : http://localhost:$(API_PORT)\n"
+	@printf "  Frontend : http://localhost:$(FRONTEND_PORT)\n"
+	@printf "  Airflow  : http://localhost:$(AIRFLOW_PORT)\n"
+
+deploy-down: ## Arrete toute la stack de deploy local (tous les profils)
+	docker compose --profile airflow --profile data --profile train down
 
 
 # ==============================================================================

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 
-import joblib
 import mlflow
 import numpy as np
 import polars as pl
@@ -19,11 +18,9 @@ from lending import config
 from lending.data import clean
 from lending.features import build_features
 from lending.train import load_processed_years
-from lending.tracking import log_cv_run
+from lending.tracking import log_cv_run, register_model
 
 log = logging.getLogger(__name__)
-
-BEST_MODEL_PATH = config.MODELS_DIR / "best_model.joblib"
 
 MODELS: dict[str, object] = {
     "random_forest": RandomForestClassifier(
@@ -108,9 +105,7 @@ def main(cv: int = 5, scoring: str = "roc_auc") -> None:
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))
     pipeline, best_name, results = compare_models(df, cv=cv, scoring=scoring)
 
-    BEST_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(pipeline, BEST_MODEL_PATH)
-    log.info("Model saved to %s", BEST_MODEL_PATH)
+    register_model(config.MLFLOW_EXPERIMENT_NAME, best_name, pipeline, results[best_name]["mean_auc_roc"])
 
 
 if __name__ == "__main__":

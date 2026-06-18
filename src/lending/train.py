@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import joblib
 import mlflow
 import polars as pl
 from sklearn.impute import SimpleImputer
@@ -16,12 +15,11 @@ from sklearn.preprocessing import StandardScaler
 from lending import config
 from lending.data import clean
 from lending.features import build_features
-from lending.tracking import log_run
+from lending.tracking import log_run, register_model
 
 log = logging.getLogger(__name__)
 
 EXPERIMENT_NAME = config.MLFLOW_EXPERIMENT_NAME
-MODEL_PATH = config.ROOT / "data" / "models" / "baseline.joblib"
 
 
 def load_processed_years(years: range, data_dir: Path) -> pl.DataFrame:
@@ -82,10 +80,7 @@ def main() -> None:
     pipeline, metrics = train(df)
 
     print(metrics["report"])
-
-    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(pipeline, MODEL_PATH)
-    log.info("Model saved to %s", MODEL_PATH)
+    register_model(EXPERIMENT_NAME, "logistic_regression", pipeline, metrics["auc_roc"])
 
 
 if __name__ == "__main__":

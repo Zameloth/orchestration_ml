@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 
-import joblib
 import mlflow
 import numpy as np
 import optuna
@@ -20,14 +19,11 @@ from lending import config
 from lending.data import clean
 from lending.features import build_features
 from lending.train import load_processed_years
-from lending.tracking import log_run
+from lending.tracking import log_run, register_model
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 log = logging.getLogger(__name__)
-
-BEST_MODEL_PATH = config.BEST_MODEL_PATH
-
 
 def _make_pipeline(model) -> Pipeline:
     return Pipeline(
@@ -127,7 +123,7 @@ def tune(
     n_trials: int = 50,
     cv: int = 3,
     experiment_name: str = config.MLFLOW_EXPERIMENT_NAME,
-) -> Pipeline:
+) -> tuple[Pipeline, float]:
     X = build_features(df).to_pandas().to_numpy(dtype=float)
     y = df["target"].to_numpy()
 
@@ -153,7 +149,7 @@ def tune(
 
     best_pipeline = _make_pipeline(_build_model(best.params))
     best_pipeline.fit(X, y)
-    return best_pipeline
+    return best_pipeline, best.value
 
 
 def main(n_trials: int = 50, cv: int = 3) -> None:
@@ -163,11 +159,8 @@ def main(n_trials: int = 50, cv: int = 3) -> None:
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
 
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))
-    pipeline = tune(df, n_trials=n_trials, cv=cv)
-
-    BEST_MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(pipeline, BEST_MODEL_PATH)
-    log.info("Best model saved to %s", BEST_MODEL_PATH)
+    pipeline, auc_roc = tune(df, n_trials=n_trials, cv=cv)
+    register_model(config.MLFLOW_EXPERIMENT_NAME, "optuna_best", pipeline, auc_roc)
 
 
 if __name__ == "__main__":

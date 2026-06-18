@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
-import joblib
+import mlflow
+import mlflow.sklearn
 import polars as pl
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -15,15 +15,14 @@ from lending.features import build_features
 
 log = logging.getLogger(__name__)
 
-MODEL_PATH: Path = config.BEST_MODEL_PATH
-
 _pipeline: Pipeline | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _pipeline
-    _pipeline = joblib.load(MODEL_PATH)
+    mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
+    _pipeline = mlflow.sklearn.load_model(f"models:/{config.MODEL_NAME}@champion")
     yield
 
 

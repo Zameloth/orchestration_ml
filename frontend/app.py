@@ -5,6 +5,8 @@ import pandas as pd
 import streamlit as st
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
+MLFLOW_URL = os.environ.get("MLFLOW_URL", "http://localhost:5000")
+API_DOCS_URL = os.environ.get("API_DOCS_URL", "http://localhost:8000/docs")
 
 _TERM = [" 36 months", " 60 months"]
 _GRADE = list("ABCDEFG")
@@ -20,6 +22,11 @@ _PURPOSE = [
     "major_purchase", "small_business", "car", "medical", "moving",
     "vacation", "house", "wedding", "renewable_energy", "educational",
 ]
+
+with st.sidebar:
+    st.header("Services")
+    st.link_button("Documentation API", API_DOCS_URL, use_container_width=True)
+    st.link_button("MLflow", MLFLOW_URL, use_container_width=True)
 
 st.title("Lending Club — Prédiction de défaut")
 

@@ -16,7 +16,8 @@ services:
     volumes:
       - ./data:/data
     environment:
-      KAGGLE_TKN: ${KAGGLE_TKN}
+      KAGGLE_USERNAME: ${KAGGLE_USER}
+      KAGGLE_KEY: ${KAGGLE_TKN}
 
   train:
     build:

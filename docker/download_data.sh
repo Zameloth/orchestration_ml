@@ -5,9 +5,6 @@ RAW_CSV=/data/raw/accepted_2007_to_2018Q4.csv
 PROCESSED_CHECK=/data/processed/2007.csv
 
 if [ ! -f "$RAW_CSV" ]; then
-    mkdir -p ~/.kaggle
-    printf '%s' "$KAGGLE_TKN" > ~/.kaggle/kaggle.json
-    chmod 600 ~/.kaggle/kaggle.json
     mkdir -p /data/raw
     kaggle datasets download -d wordsforthewise/lending-club -p /data/raw/ --unzip
     echo "[OK] Données téléchargées."

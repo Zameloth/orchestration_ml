@@ -221,4 +221,5 @@ data
 
 # MLflow
 mlruns/
-models/
+models/*
+!models/best_model.joblib

@@ -36,8 +36,11 @@ services:
     image: ghcr.io/zameloth/orchestration_ml/mlproject-api:latest
     ports:
       - "${API_PORT:-8000}:8000"
+    volumes:
+      - predictions_data:/app/data
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      DATA_DIR: /app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
@@ -62,3 +65,4 @@ services:
 volumes:
   mlflow_data:
   models_data:
+  predictions_data:

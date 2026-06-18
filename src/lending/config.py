@@ -42,5 +42,6 @@ EVAL_YEARS = range(2014, 2015)
 MIN_AUC_ROC = 0.65
 
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", f"sqlite:///{ROOT}/mlruns/mlflow.db")
+DATA_DIR = os.getenv("DATA_DIR", str(ROOT / "data"))
 MLFLOW_EXPERIMENT_NAME = "lending-model-comparison"
 MODEL_NAME = "lending-classifier"

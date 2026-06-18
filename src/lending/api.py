@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from pathlib import Path
 
 import mlflow
 import mlflow.sklearn
@@ -16,6 +19,48 @@ from lending.features import build_features
 log = logging.getLogger(__name__)
 
 _pipeline: Pipeline | None = None
+_DB_PATH = Path(config.DATA_DIR) / "predictions.db"
+
+
+def _init_db() -> None:
+    _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(_DB_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS predictions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                loan_amnt REAL,
+                grade TEXT,
+                int_rate REAL,
+                purpose TEXT,
+                default_probability REAL,
+                prediction TEXT
+            )
+            """
+        )
+
+
+def _save_prediction(
+    loan: LoanApplication, prob: float, label: str
+) -> None:
+    with sqlite3.connect(_DB_PATH) as conn:
+        conn.execute(
+            """
+            INSERT INTO predictions
+                (created_at, loan_amnt, grade, int_rate, purpose, default_probability, prediction)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                datetime.now(timezone.utc).isoformat(),
+                loan.loan_amnt,
+                loan.grade,
+                loan.int_rate,
+                loan.purpose,
+                prob,
+                label,
+            ),
+        )
 
 
 @asynccontextmanager
@@ -23,6 +68,7 @@ async def lifespan(app: FastAPI):
     global _pipeline
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     _pipeline = mlflow.sklearn.load_model(f"models:/{config.MODEL_NAME}@champion")
+    _init_db()
     yield
 
 
@@ -84,6 +130,17 @@ class PredictionResponse(BaseModel):
     )
 
 
+class PredictionRecord(BaseModel):
+    id: int
+    created_at: str
+    loan_amnt: float
+    grade: str
+    int_rate: float
+    purpose: str
+    default_probability: float
+    prediction: str
+
+
 @app.get("/health", tags=["Monitoring"], summary="Vérification de l'état du service")
 def health():
     """Retourne `ok` si l'API est opérationnelle."""
@@ -108,4 +165,21 @@ def predict(loan: LoanApplication):
     prob = float(_pipeline.predict_proba(X)[0, 1])
     label = "charged_off" if _pipeline.predict(X)[0] == 1 else "fully_paid"
     log.info("prediction — probability: %.4f, label: %s", prob, label)
+    _save_prediction(loan, prob, label)
     return PredictionResponse(default_probability=prob, prediction=label)
+
+
+@app.get(
+    "/predictions",
+    response_model=list[PredictionRecord],
+    tags=["Historique"],
+    summary="Historique des prédictions",
+)
+def get_predictions():
+    """Retourne toutes les prédictions passées, de la plus récente à la plus ancienne."""
+    with sqlite3.connect(_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT * FROM predictions ORDER BY id DESC"
+        ).fetchall()
+    return [dict(row) for row in rows]

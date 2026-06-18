@@ -23,6 +23,52 @@ _PURPOSE = [
     "vacation", "house", "wedding", "renewable_energy", "educational",
 ]
 
+_PRESET_DEFAULT = {
+    "loan_amnt": 10000, "int_rate": 12.0, "installment": 300,
+    "annual_inc": 60000, "dti": 15.0, "delinq_2yrs": 0,
+    "fico_range": (690, 694), "inq_last_6mths": 0,
+    "open_acc": 10, "pub_rec": 0, "revol_bal": 15000,
+    "revol_util": 50.0, "total_acc": 20,
+    "term": " 36 months", "grade": "C", "sub_grade": "C3",
+    "emp_length": "5 years", "home_ownership": "RENT",
+    "verification_status": "Not Verified", "purpose": "debt_consolidation",
+}
+
+_PRESET_GOOD = {
+    "loan_amnt": 8000, "int_rate": 7.0, "installment": 180,
+    "annual_inc": 85000, "dti": 6.0, "delinq_2yrs": 0,
+    "fico_range": (730, 734), "inq_last_6mths": 0,
+    "open_acc": 8, "pub_rec": 0, "revol_bal": 4000,
+    "revol_util": 15.0, "total_acc": 14,
+    "term": " 36 months", "grade": "A", "sub_grade": "A2",
+    "emp_length": "5 years", "home_ownership": "MORTGAGE",
+    "verification_status": "Verified", "purpose": "debt_consolidation",
+}
+
+_PRESET_RISKY = {
+    "loan_amnt": 28000, "int_rate": 25.0, "installment": 850,
+    "annual_inc": 32000, "dti": 32.0, "delinq_2yrs": 3,
+    "fico_range": (590, 594), "inq_last_6mths": 6,
+    "open_acc": 22, "pub_rec": 2, "revol_bal": 42000,
+    "revol_util": 88.0, "total_acc": 32,
+    "term": " 60 months", "grade": "F", "sub_grade": "F3",
+    "emp_length": "< 1 year", "home_ownership": "RENT",
+    "verification_status": "Not Verified", "purpose": "small_business",
+}
+
+for key, val in _PRESET_DEFAULT.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
+
+
+def _risk_band(prob: float) -> tuple[str, str, str]:
+    if prob < 0.30:
+        return "Faible", "normal", "✅"
+    if prob < 0.60:
+        return "Modéré", "off", "⚠️"
+    return "Élevé", "inverse", "🔴"
+
+
 with st.sidebar:
     st.header("Services")
     st.link_button("Documentation API", API_DOCS_URL, use_container_width=True)
@@ -108,47 +154,61 @@ with tab_home:
     st.bar_chart(chart_data)
 
 with tab_pred:
+    st.caption("Charger un profil type :")
+    p1, p2, p3 = st.columns(3)
+    if p1.button("Profil par défaut", use_container_width=True):
+        for k, v in _PRESET_DEFAULT.items():
+            st.session_state[k] = v
+    if p2.button("Bon emprunteur", use_container_width=True):
+        for k, v in _PRESET_GOOD.items():
+            st.session_state[k] = v
+    if p3.button("Emprunteur à risque", use_container_width=True):
+        for k, v in _PRESET_RISKY.items():
+            st.session_state[k] = v
+
     with st.form("prediction_form"):
         st.subheader("Informations du prêt")
         c1, c2 = st.columns(2)
         with c1:
-            loan_amnt = st.number_input("Montant (loan_amnt)", 500.0, 40000.0, 10000.0, 500.0)
-            int_rate = st.number_input("Taux d'intérêt % (int_rate)", 5.0, 30.0, 12.0, 0.1)
-            installment = st.number_input("Mensualité (installment)", 10.0, 1500.0, 300.0, 10.0)
-            annual_inc = st.number_input("Revenu annuel (annual_inc)", 0.0, 1_000_000.0, 60_000.0, 1000.0)
-            dti = st.number_input("Ratio dette/revenu (dti)", 0.0, 100.0, 15.0, 0.1)
-            delinq_2yrs = st.number_input("Incidents 2 ans (delinq_2yrs)", 0.0, 30.0, 0.0, 1.0)
-            fico_range_low = st.number_input("FICO bas (fico_range_low)", 580.0, 850.0, 690.0, 5.0)
+            loan_amnt = st.slider("Montant du prêt ($)", 500, 40000, step=500, key="loan_amnt")
+            int_rate = st.slider("Taux d'intérêt (%)", 5.0, 30.0, step=0.5, key="int_rate")
+            installment = st.slider("Mensualité ($)", 10, 1500, step=10, key="installment")
+            annual_inc = st.slider("Revenu annuel ($)", 0, 500_000, step=5000, key="annual_inc")
+            dti = st.slider("Ratio dette/revenu (%)", 0.0, 60.0, step=0.5, key="dti")
+            delinq_2yrs = st.slider("Incidents de paiement (2 ans)", 0, 20, step=1, key="delinq_2yrs")
+            fico_range = st.slider("Score FICO", 580, 854, step=4, key="fico_range")
         with c2:
-            fico_range_high = st.number_input("FICO haut (fico_range_high)", 584.0, 854.0, 694.0, 5.0)
-            inq_last_6mths = st.number_input("Demandes crédit 6 mois (inq_last_6mths)", 0.0, 33.0, 0.0, 1.0)
-            open_acc = st.number_input("Comptes ouverts (open_acc)", 0.0, 90.0, 10.0, 1.0)
-            pub_rec = st.number_input("Mentions publiques (pub_rec)", 0.0, 86.0, 0.0, 1.0)
-            revol_bal = st.number_input("Solde revolving (revol_bal)", 0.0, 300_000.0, 15_000.0, 500.0)
-            revol_util = st.number_input("Utilisation revolving % (revol_util)", 0.0, 100.0, 50.0, 1.0)
-            total_acc = st.number_input("Total comptes (total_acc)", 1.0, 176.0, 20.0, 1.0)
+            inq_last_6mths = st.slider("Demandes de crédit (6 mois)", 0, 15, step=1, key="inq_last_6mths")
+            open_acc = st.slider("Comptes de crédit ouverts", 0, 60, step=1, key="open_acc")
+            pub_rec = st.slider("Mentions publiques (faillites…)", 0, 10, step=1, key="pub_rec")
+            revol_bal = st.slider("Solde revolving ($)", 0, 150_000, step=1000, key="revol_bal")
+            revol_util = st.slider("Utilisation revolving (%)", 0.0, 100.0, step=1.0, key="revol_util")
+            total_acc = st.slider("Total lignes de crédit", 1, 100, step=1, key="total_acc")
 
         st.subheader("Profil emprunteur")
         c3, c4 = st.columns(2)
         with c3:
-            term = st.selectbox("Durée (term)", _TERM)
-            grade = st.selectbox("Note (grade)", _GRADE)
-            sub_grade = st.selectbox("Sous-note (sub_grade)", _SUB_GRADE)
-            emp_length = st.selectbox("Ancienneté emploi (emp_length)", _EMP_LENGTH)
+            term = st.selectbox("Durée du prêt", _TERM, key="term")
+            grade = st.selectbox("Note de risque", _GRADE, key="grade")
+            sub_grade = st.selectbox("Sous-note", _SUB_GRADE, key="sub_grade")
+            emp_length = st.selectbox("Ancienneté professionnelle", _EMP_LENGTH, key="emp_length")
         with c4:
-            home_ownership = st.selectbox("Logement (home_ownership)", _HOME_OWNERSHIP)
-            verification_status = st.selectbox("Vérification revenu (verification_status)", _VERIFICATION)
-            purpose = st.selectbox("Motif du prêt (purpose)", _PURPOSE)
+            home_ownership = st.selectbox("Statut résidentiel", _HOME_OWNERSHIP, key="home_ownership")
+            verification_status = st.selectbox("Vérification du revenu", _VERIFICATION, key="verification_status")
+            purpose = st.selectbox("Motif du prêt", _PURPOSE, key="purpose")
 
-        submitted = st.form_submit_button("Prédire")
+        submitted = st.form_submit_button("Prédire", use_container_width=True)
 
     if submitted:
+        fico_low, fico_high = fico_range if isinstance(fico_range, tuple) else (fico_range, fico_range + 4)
         payload = {
-            "loan_amnt": loan_amnt, "int_rate": int_rate, "installment": installment,
-            "annual_inc": annual_inc, "dti": dti, "delinq_2yrs": delinq_2yrs,
-            "fico_range_low": fico_range_low, "fico_range_high": fico_range_high,
-            "inq_last_6mths": inq_last_6mths, "open_acc": open_acc, "pub_rec": pub_rec,
-            "revol_bal": revol_bal, "revol_util": revol_util, "total_acc": total_acc,
+            "loan_amnt": float(loan_amnt), "int_rate": float(int_rate),
+            "installment": float(installment), "annual_inc": float(annual_inc),
+            "dti": float(dti), "delinq_2yrs": float(delinq_2yrs),
+            "fico_range_low": float(fico_low), "fico_range_high": float(fico_high),
+            "inq_last_6mths": float(inq_last_6mths), "open_acc": float(open_acc),
+            "pub_rec": float(pub_rec), "revol_bal": float(revol_bal),
+            "revol_util": float(revol_util), "total_acc": float(total_acc),
             "term": term, "grade": grade, "sub_grade": sub_grade,
             "emp_length": emp_length, "home_ownership": home_ownership,
             "verification_status": verification_status, "purpose": purpose,
@@ -158,18 +218,51 @@ with tab_pred:
             resp.raise_for_status()
             result = resp.json()
 
-            m1, m2 = st.columns(2)
-            m1.metric("Classe prédite", result["prediction"])
-            m2.metric("Probabilité de défaut", f"{result['default_probability']:.1%}")
-            st.progress(result["default_probability"])
+            prob = result["default_probability"]
+            risk_label, delta_color, icon = _risk_band(prob)
+
+            st.divider()
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Classe prédite", result["prediction"])
+            col_b.metric("Probabilité de défaut", f"{prob:.1%}")
+            col_c.metric(f"{icon} Niveau de risque", risk_label, delta_color=delta_color)
+
+            st.progress(prob)
 
             if result["prediction"] == "charged_off":
-                st.error("Risque élevé de défaut de paiement.")
+                st.error(f"**Risque {risk_label.lower()} de défaut de paiement** ({prob:.1%})")
             else:
-                st.success("Faible risque de défaut de paiement.")
+                st.success(f"**Risque {risk_label.lower()} de défaut de paiement** ({prob:.1%})")
 
         except httpx.HTTPError as e:
             st.error(f"Erreur lors de l'appel à l'API : {e}")
 
 with tab_hist:
-    st.info("Historique non disponible (endpoint GET /predictions non implémenté).")
+    if st.button("Rafraîchir"):
+        st.rerun()
+
+    try:
+        resp = httpx.get(f"{API_URL}/predictions", timeout=10.0)
+        resp.raise_for_status()
+        records = resp.json()
+
+        if not records:
+            st.info("Aucune prédiction enregistrée pour l'instant.")
+        else:
+            df = pd.DataFrame(records)
+            df["default_probability"] = df["default_probability"].map("{:.1%}".format)
+            df = df.rename(columns={
+                "id": "ID",
+                "created_at": "Date",
+                "loan_amnt": "Montant",
+                "grade": "Note",
+                "int_rate": "Taux (%)",
+                "purpose": "Motif",
+                "default_probability": "Prob. défaut",
+                "prediction": "Prédiction",
+            })
+            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.caption(f"{len(df)} prédiction(s) au total")
+
+    except httpx.HTTPError as e:
+        st.error(f"Erreur lors de la récupération de l'historique : {e}")

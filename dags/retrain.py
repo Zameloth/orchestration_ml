@@ -13,18 +13,18 @@ def _retrain() -> None:
 
     from lending import config
     from lending.data import clean
+    from lending.train import load_processed_years
+    from lending.train_optuna import tune
     from lending.tracking import register_model
-    from lending.train import load_processed_years, train
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s"
     )
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))
-    pipeline, metrics = train(df)
-    print(metrics["report"])
+    pipeline, auc_roc = tune(df)
     register_model(
-        config.MLFLOW_EXPERIMENT_NAME, "logistic_regression", pipeline, metrics["auc_roc"]
+        config.MLFLOW_EXPERIMENT_NAME, "optuna_best", pipeline, auc_roc
     )
 
 

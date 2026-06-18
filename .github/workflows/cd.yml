@@ -203,7 +203,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: docker-compose.yml
+          source: "docker-compose.yml,dags"
           target: ~/app
 
       - name: Deploy sur le VPS

@@ -3,7 +3,7 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --extra api --no-dev --frozen --no-install-project
+RUN uv sync --extra api --no-dev --frozen --no-install-project --compile-bytecode
 
 FROM python:3.13-slim
 

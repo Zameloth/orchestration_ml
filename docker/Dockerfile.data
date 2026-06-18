@@ -1,13 +1,9 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --no-dev --frozen --no-install-project
+RUN uv sync --extra data --no-dev --frozen --no-install-project
 RUN uv pip install --no-cache kaggle
 
 COPY src/ ./src/

@@ -105,7 +105,9 @@ def main(cv: int = 5, scoring: str = "roc_auc") -> None:
     df = clean(load_processed_years(config.TRAIN_YEARS, config.PROCESSED_DIR))
     pipeline, best_name, results = compare_models(df, cv=cv, scoring=scoring)
 
-    register_model(config.MLFLOW_EXPERIMENT_NAME, best_name, pipeline, results[best_name]["mean_auc_roc"])
+    register_model(
+        config.MLFLOW_EXPERIMENT_NAME, best_name, pipeline, results[best_name]["mean_auc_roc"]
+    )
 
 
 if __name__ == "__main__":

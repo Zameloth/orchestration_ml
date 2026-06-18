@@ -25,6 +25,7 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 log = logging.getLogger(__name__)
 
+
 def _make_pipeline(model) -> Pipeline:
     return Pipeline(
         [

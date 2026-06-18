@@ -52,6 +52,8 @@ def register_model(
 
     if auc_roc > champion_auc:
         client.set_registered_model_alias(config.MODEL_NAME, "champion", mv.version)
-        log.info("New champion: version %s (AUC-ROC: %.4f > %.4f)", mv.version, auc_roc, champion_auc)
+        log.info(
+            "New champion: version %s (AUC-ROC: %.4f > %.4f)", mv.version, auc_roc, champion_auc
+        )
     else:
         log.info("Model not promoted (AUC-ROC: %.4f <= champion %.4f)", auc_roc, champion_auc)

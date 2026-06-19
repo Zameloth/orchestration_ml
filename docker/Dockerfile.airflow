@@ -24,3 +24,4 @@ RUN pip install --no-cache-dir \
     "lightgbm>=4.3"
 
 ENV PYTHONPATH=/app/src
+ENV GIT_PYTHON_REFRESH=quiet

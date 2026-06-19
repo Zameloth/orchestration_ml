@@ -40,7 +40,7 @@ def register_model(
         mlflow.log_metric("auc_roc", auc_roc)
         mlflow.sklearn.log_model(
             pipeline,
-            "model",
+            name="model",
             skops_trusted_types=[
                 "numpy.dtype",
                 "xgboost.core.Booster",

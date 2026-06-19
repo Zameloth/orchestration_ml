@@ -344,8 +344,7 @@ with tab_hist:
 
             with col_chart1:
                 st.subheader("Distribution des probabilités")
-                hist_df = pd.DataFrame({"Prob. défaut": df["default_probability"]})
-                st.bar_chart(hist_df.value_counts(bins=10).sort_index())
+                st.bar_chart(df["default_probability"].value_counts(bins=10).sort_index())
 
             with col_chart2:
                 st.subheader("Répartition des prédictions")

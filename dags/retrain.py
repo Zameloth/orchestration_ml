@@ -4,6 +4,7 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 
 def _retrain() -> None:
@@ -35,4 +36,12 @@ with DAG(
     catchup=False,
     tags=["ml", "lending"],
 ) as dag:
-    PythonOperator(task_id="retrain", python_callable=_retrain)
+    retrain = PythonOperator(task_id="retrain", python_callable=_retrain)
+
+    trigger_batch = TriggerDagRunOperator(
+        task_id="trigger_batch_predict",
+        trigger_dag_id="lending_batch_predict",
+        wait_for_completion=False,
+    )
+
+    retrain >> trigger_batch

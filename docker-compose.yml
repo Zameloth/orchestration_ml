@@ -111,11 +111,7 @@ services:
     depends_on:
       postgres-airflow:
         condition: service_healthy
-    command: >
-      bash -c "airflow db migrate &&
-               { airflow users create --username admin --firstname Admin --lastname User
-                 --role Admin --email admin@example.com
-                 --password $${AIRFLOW_ADMIN_PASSWORD:-admin} || true; }"
+    command: bash -c "airflow db migrate && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password $${AIRFLOW_ADMIN_PASSWORD:-admin} || true"
 
   airflow-webserver:
     <<: *airflow-common

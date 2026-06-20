@@ -181,6 +181,13 @@ deploy-local: deploy-local-build ## Deploy complet en local : build → data →
 	@printf "  Frontend : http://localhost:$(FRONTEND_PORT)\n"
 	@printf "  Airflow  : http://localhost:$(AIRFLOW_PORT)\n"
 
+deploy-reset: ## Purge les volumes MLflow et relance un deploy-local complet
+	@echo "$(YELLOW)>> Purge des volumes MLflow...$(RESET)"
+	docker compose --profile airflow --profile data --profile train down --volumes --remove-orphans 2>/dev/null || true
+	docker volume rm orchestration_ml_mlflow_data 2>/dev/null || true
+	@echo "$(GREEN)[OK] Volumes purges$(RESET)"
+	$(MAKE) deploy-local
+
 deploy-down: ## Arrete toute la stack de deploy local (tous les profils)
 	docker compose --profile airflow --profile data --profile train down
 

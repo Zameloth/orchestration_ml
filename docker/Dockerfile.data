@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --extra data --no-dev --frozen --no-install-project
-RUN uv pip install --no-cache kaggle
+RUN uv pip install --no-cache "kaggle<1.6"
 
 COPY src/ ./src/
 COPY docker/download_data.sh /download_data.sh

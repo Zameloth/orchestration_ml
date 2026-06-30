@@ -8,12 +8,14 @@ x-airflow-common: &airflow-common
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:${AIRFLOW_PG_PASSWORD:-airflow}@postgres-airflow/airflow"
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+    AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
     MLFLOW_TRACKING_URI: http://mlflow:5000
   volumes:
     - ./dags:/opt/airflow/dags
     - ./data:/app/data
     - models_data:/app/models
     - airflow_logs:/opt/airflow/logs
+    - ./airflow/webserver_config.py:/opt/airflow/webserver_config.py:ro
   profiles: [airflow]
 
 services:
@@ -24,6 +26,17 @@ services:
     volumes:
       - mlflow_data:/mlruns
     command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --artifacts-destination /mlruns/artifacts --serve-artifacts --host 0.0.0.0 --port 5000 --allowed-hosts '*' --cors-allowed-origins '*'
+    networks:
+      - default
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-mlflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/mlflow`)"
+      - "traefik.http.routers.ml-mlflow.tls=true"
+      - "traefik.http.routers.ml-mlflow.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.ml-mlflow-strip.stripprefix.prefixes=/mlflow"
+      - "traefik.http.routers.ml-mlflow.middlewares=ml-mlflow-strip"
+      - "traefik.http.services.ml-mlflow.loadbalancer.server.port=5000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 10s
@@ -60,6 +73,7 @@ services:
 
   api:
     image: ghcr.io/zameloth/orchestration_ml/mlproject-api:latest
+    command: ["uvicorn", "lending.api:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/api"]
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
@@ -67,6 +81,17 @@ services:
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
       DATA_DIR: /app/data
+    networks:
+      - default
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.ml-api.tls=true"
+      - "traefik.http.routers.ml-api.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.ml-api-strip.stripprefix.prefixes=/api"
+      - "traefik.http.routers.ml-api.middlewares=ml-api-strip"
+      - "traefik.http.services.ml-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
@@ -82,12 +107,21 @@ services:
     ports:
       - "${FRONTEND_PORT:-8501}:8501"
     environment:
-      API_URL: ${API_URL:-http://api:8000}
-      MLFLOW_URL: ${MLFLOW_URL:-http://localhost:${MLFLOW_PORT:-5000}}
+      API_URL: http://api:8000
+      MLFLOW_URL: https://lending-club.theo-eloy.fr/mlflow
       MLFLOW_INTERNAL_URL: http://mlflow:5000
-      API_DOCS_URL: ${API_DOCS_URL:-http://localhost:${API_PORT:-8000}/docs}
-      AIRFLOW_URL: ${AIRFLOW_URL:-http://localhost:${AIRFLOW_PORT:-8080}}
+      API_DOCS_URL: https://lending-club.theo-eloy.fr/api/docs
+      AIRFLOW_URL: https://lending-club.theo-eloy.fr/airflow
       AIRFLOW_INTERNAL_URL: http://airflow-webserver:8080
+    networks:
+      - default
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-frontend.rule=Host(`lending-club.theo-eloy.fr`)"
+      - "traefik.http.routers.ml-frontend.tls=true"
+      - "traefik.http.routers.ml-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ml-frontend.loadbalancer.server.port=8501"
     depends_on:
       api:
         condition: service_healthy
@@ -115,6 +149,14 @@ services:
 
   airflow-webserver:
     <<: *airflow-common
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:${AIRFLOW_PG_PASSWORD:-airflow}@postgres-airflow/airflow"
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+      AIRFLOW__WEBSERVER__BASE_URL: https://lending-club.theo-eloy.fr/airflow
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     depends_on:
       postgres-airflow:
         condition: service_healthy
@@ -122,6 +164,18 @@ services:
         condition: service_completed_successfully
     ports:
       - "${AIRFLOW_PORT:-8080}:8080"
+    networks:
+      - default
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-airflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/airflow`)"
+      - "traefik.http.routers.ml-airflow.tls=true"
+      - "traefik.http.routers.ml-airflow.tls.certresolver=letsencrypt"
+      - "traefik.http.middlewares.ml-airflow-strip.stripprefix.prefixes=/airflow"
+      - "traefik.http.middlewares.ml-airflow-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/airflow"
+      - "traefik.http.routers.ml-airflow.middlewares=ml-airflow-strip,ml-airflow-prefix"
+      - "traefik.http.services.ml-airflow.loadbalancer.server.port=8080"
     command: webserver
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
@@ -144,3 +198,7 @@ volumes:
   predictions_data:
   airflow_pg_data:
   airflow_logs:
+
+networks:
+  web:
+    external: true

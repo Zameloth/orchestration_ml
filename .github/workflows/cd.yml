@@ -203,7 +203,8 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: rm -rf ~/app/dags && mkdir -p ~/app/dags
+          port: 2222
+          script: rm -rf ~/lending-club/dags && mkdir -p ~/lending-club/dags
 
       - name: Copie du docker-compose sur le VPS
         uses: appleboy/scp-action@v0.1.7
@@ -211,8 +212,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "docker-compose.yml,dags"
-          target: ~/app
+          port: 2222
+          source: "docker-compose.yml,dags,airflow"
+          target: ~/lending-club
 
       - name: Deploy sur le VPS
         uses: appleboy/ssh-action@v1.2.0
@@ -220,9 +222,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 2222
           envs: KAGGLE_USER,KAGGLE_TKN
           script: |
-            cd ~/app
+            cd ~/lending-club
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker compose --profile data --profile train --profile airflow pull
             KAGGLE_USER="$KAGGLE_USER" KAGGLE_TKN="$KAGGLE_TKN" docker compose --profile data run --rm data

@@ -220,7 +220,7 @@ with st.sidebar:
     services = [
         ("API", API_URL + "/health", API_DOCS_URL),
         ("MLflow", MLFLOW_INTERNAL_URL + "/health", MLFLOW_URL),
-        ("Airflow", AIRFLOW_INTERNAL_URL + "/health", AIRFLOW_URL),
+        ("Airflow", AIRFLOW_INTERNAL_URL + "/airflow/health", AIRFLOW_URL),
     ]
     for name, ping_url, link_url in services:
         up = _ping(ping_url)

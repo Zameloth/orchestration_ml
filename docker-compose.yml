@@ -25,7 +25,11 @@ services:
       - "${MLFLOW_PORT:-5000}:5000"
     volumes:
       - mlflow_data:/mlruns
-    command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --artifacts-destination /mlruns/artifacts --serve-artifacts --host 0.0.0.0 --port 5000 --allowed-hosts '*' --cors-allowed-origins '*'
+    environment:
+      # Ce projet n'utilise pas les webhooks/deployment jobs MLflow : ce sous-système
+      # spawn ~8 process huey (non partagés en mémoire) pour rien, soit ~1.2Go de RAM.
+      MLFLOW_SERVER_ENABLE_JOB_EXECUTION: "false"
+    command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --artifacts-destination /mlruns/artifacts --serve-artifacts --host 0.0.0.0 --port 5000 --workers 2 --allowed-hosts '*' --cors-allowed-origins '*'
     networks:
       - default
       - web

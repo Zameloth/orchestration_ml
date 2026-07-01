@@ -31,12 +31,23 @@ services:
       - web
     labels:
       - "traefik.enable=true"
+      # Point d'entrée UI : /mlflow → strip → MLflow /
       - "traefik.http.routers.ml-mlflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/mlflow`)"
       - "traefik.http.routers.ml-mlflow.tls=true"
       - "traefik.http.routers.ml-mlflow.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.ml-mlflow-strip.stripprefix.prefixes=/mlflow"
       - "traefik.http.routers.ml-mlflow.middlewares=ml-mlflow-strip"
       - "traefik.http.services.ml-mlflow.loadbalancer.server.port=5000"
+      # Assets statiques (chemins absolus générés par React)
+      - "traefik.http.routers.ml-mlflow-static.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/_static`)"
+      - "traefik.http.routers.ml-mlflow-static.tls=true"
+      - "traefik.http.routers.ml-mlflow-static.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ml-mlflow-static.service=ml-mlflow"
+      # REST API MLflow (appelée directement par le JS)
+      - "traefik.http.routers.ml-mlflow-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api/2.0`)"
+      - "traefik.http.routers.ml-mlflow-api.tls=true"
+      - "traefik.http.routers.ml-mlflow-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ml-mlflow-api.service=ml-mlflow"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 10s
@@ -172,9 +183,7 @@ services:
       - "traefik.http.routers.ml-airflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/airflow`)"
       - "traefik.http.routers.ml-airflow.tls=true"
       - "traefik.http.routers.ml-airflow.tls.certresolver=letsencrypt"
-      - "traefik.http.middlewares.ml-airflow-strip.stripprefix.prefixes=/airflow"
-      - "traefik.http.middlewares.ml-airflow-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/airflow"
-      - "traefik.http.routers.ml-airflow.middlewares=ml-airflow-strip,ml-airflow-prefix"
+      - "traefik.http.routers.ml-airflow.middlewares="
       - "traefik.http.services.ml-airflow.loadbalancer.server.port=8080"
     command: webserver
     healthcheck:

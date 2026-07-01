@@ -38,8 +38,8 @@ services:
       - "traefik.http.middlewares.ml-mlflow-strip.stripprefix.prefixes=/mlflow"
       - "traefik.http.routers.ml-mlflow.middlewares=ml-mlflow-strip"
       - "traefik.http.services.ml-mlflow.loadbalancer.server.port=5000"
-      # Assets statiques (chemins absolus générés par React)
-      - "traefik.http.routers.ml-mlflow-static.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/_static`)"
+      # Assets statiques (chemins relatifs résolus à la racine par le navigateur)
+      - "traefik.http.routers.ml-mlflow-static.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/static-files`)"
       - "traefik.http.routers.ml-mlflow-static.tls=true"
       - "traefik.http.routers.ml-mlflow-static.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-mlflow-static.service=ml-mlflow"

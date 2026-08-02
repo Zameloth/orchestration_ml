@@ -35,23 +35,29 @@ services:
       - web
     labels:
       - "traefik.enable=true"
+      # Cette démo est endormie à la demande — voir le bloc `frontend`.
+      - "sablier.enable=true"
+      - "sablier.group=lending-club"
+      - "traefik.docker.allownonrunning=true"
       # Point d'entrée UI : /mlflow → strip → MLflow /
       - "traefik.http.routers.ml-mlflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/mlflow`)"
       - "traefik.http.routers.ml-mlflow.tls=true"
       - "traefik.http.routers.ml-mlflow.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.ml-mlflow-strip.stripprefix.prefixes=/mlflow"
-      - "traefik.http.routers.ml-mlflow.middlewares=ml-mlflow-strip"
+      - "traefik.http.routers.ml-mlflow.middlewares=ml-sablier,ml-mlflow-strip"
       - "traefik.http.services.ml-mlflow.loadbalancer.server.port=5000"
       # Assets statiques (chemins relatifs résolus à la racine par le navigateur)
       - "traefik.http.routers.ml-mlflow-static.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/static-files`)"
       - "traefik.http.routers.ml-mlflow-static.tls=true"
       - "traefik.http.routers.ml-mlflow-static.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-mlflow-static.service=ml-mlflow"
+      - "traefik.http.routers.ml-mlflow-static.middlewares=ml-sablier"
       # REST API MLflow (appelée directement par le JS)
       - "traefik.http.routers.ml-mlflow-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api/2.0`)"
       - "traefik.http.routers.ml-mlflow-api.tls=true"
       - "traefik.http.routers.ml-mlflow-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-mlflow-api.service=ml-mlflow"
+      - "traefik.http.routers.ml-mlflow-api.middlewares=ml-sablier"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 10s
@@ -101,11 +107,15 @@ services:
       - web
     labels:
       - "traefik.enable=true"
+      # Cette démo est endormie à la demande — voir le bloc `frontend`.
+      - "sablier.enable=true"
+      - "sablier.group=lending-club"
+      - "traefik.docker.allownonrunning=true"
       - "traefik.http.routers.ml-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api`)"
       - "traefik.http.routers.ml-api.tls=true"
       - "traefik.http.routers.ml-api.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.ml-api-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.ml-api.middlewares=ml-api-strip"
+      - "traefik.http.routers.ml-api.middlewares=ml-sablier,ml-api-strip"
       - "traefik.http.services.ml-api.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
@@ -133,9 +143,30 @@ services:
       - web
     labels:
       - "traefik.enable=true"
+      # Démo endormie à la demande : les trois instances (frontend, api, mlflow)
+      # forment le groupe `lending-club` et sont réveillées puis rendormies
+      # ensemble. `allownonrunning` est indispensable — sans lui Traefik oublie
+      # la route dès que le container s'arrête, répond 404, et le middleware
+      # chargé du réveil n'est jamais atteint.
+      - "sablier.enable=true"
+      - "sablier.group=lending-club"
+      - "traefik.docker.allownonrunning=true"
+      # Middleware partagé par tous les routeurs de la démo, défini une seule
+      # fois ici. `keepAliveInterval` est vital : le frontend est un Streamlit,
+      # qui tient une WebSocket ouverte au lieu d'enchaîner des requêtes HTTP.
+      # Sans ce ping, un visiteur en pleine utilisation ne prolongerait pas sa
+      # session et se ferait couper l'application sous les pieds.
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.sablierUrl=http://sablier:10000"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.group=lending-club"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.sessionDuration=15m"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.keepAliveInterval=1m"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.dynamic.displayName=Lending Club"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.dynamic.showDetails=true"
+      - "traefik.http.middlewares.ml-sablier.plugin.sablier.dynamic.theme=ghost"
       - "traefik.http.routers.ml-frontend.rule=Host(`lending-club.theo-eloy.fr`)"
       - "traefik.http.routers.ml-frontend.tls=true"
       - "traefik.http.routers.ml-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ml-frontend.middlewares=ml-sablier"
       - "traefik.http.services.ml-frontend.loadbalancer.server.port=8501"
     depends_on:
       api:

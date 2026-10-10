@@ -158,7 +158,7 @@ docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 
 
 # ==============================================================================
-# Deploy local  (équivalent CD)
+# Deploy local  (équivalent du déploiement par self-host sur aspire)
 # ==============================================================================
 
 deploy-local-build: ## Construit toutes les images Docker en local

@@ -22,7 +22,7 @@ services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     ports:
-      - "${MLFLOW_PORT:-5000}:5000"
+      - "127.0.0.1:${MLFLOW_PORT:-5000}:5000"
     volumes:
       - mlflow_data:/mlruns
     environment:
@@ -41,21 +41,15 @@ services:
       - "traefik.docker.allownonrunning=true"
       # Point d'entrée UI : /mlflow → strip → MLflow /
       - "traefik.http.routers.ml-mlflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/mlflow`)"
-      - "traefik.http.routers.ml-mlflow.tls=true"
-      - "traefik.http.routers.ml-mlflow.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.ml-mlflow-strip.stripprefix.prefixes=/mlflow"
       - "traefik.http.routers.ml-mlflow.middlewares=ml-sablier,ml-mlflow-strip"
       - "traefik.http.services.ml-mlflow.loadbalancer.server.port=5000"
       # Assets statiques (chemins relatifs résolus à la racine par le navigateur)
       - "traefik.http.routers.ml-mlflow-static.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/static-files`)"
-      - "traefik.http.routers.ml-mlflow-static.tls=true"
-      - "traefik.http.routers.ml-mlflow-static.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-mlflow-static.service=ml-mlflow"
       - "traefik.http.routers.ml-mlflow-static.middlewares=ml-sablier"
       # REST API MLflow (appelée directement par le JS)
       - "traefik.http.routers.ml-mlflow-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api/2.0`)"
-      - "traefik.http.routers.ml-mlflow-api.tls=true"
-      - "traefik.http.routers.ml-mlflow-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-mlflow-api.service=ml-mlflow"
       - "traefik.http.routers.ml-mlflow-api.middlewares=ml-sablier"
     healthcheck:
@@ -93,10 +87,13 @@ services:
         condition: service_healthy
 
   api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
     image: ghcr.io/zameloth/orchestration_ml/mlproject-api:latest
     command: ["uvicorn", "lending.api:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/api"]
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - predictions_data:/app/data
     environment:
@@ -112,8 +109,6 @@ services:
       - "sablier.group=lending-club"
       - "traefik.docker.allownonrunning=true"
       - "traefik.http.routers.ml-api.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.ml-api.tls=true"
-      - "traefik.http.routers.ml-api.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.ml-api-strip.stripprefix.prefixes=/api"
       - "traefik.http.routers.ml-api.middlewares=ml-sablier,ml-api-strip"
       - "traefik.http.services.ml-api.loadbalancer.server.port=8000"
@@ -128,9 +123,12 @@ services:
         condition: service_healthy
 
   frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
     image: ghcr.io/zameloth/orchestration_ml/mlproject-frontend:latest
     ports:
-      - "${FRONTEND_PORT:-8501}:8501"
+      - "127.0.0.1:${FRONTEND_PORT:-8501}:8501"
     environment:
       API_URL: http://api:8000
       MLFLOW_URL: https://lending-club.theo-eloy.fr/mlflow
@@ -164,8 +162,6 @@ services:
       - "traefik.http.middlewares.ml-sablier.plugin.sablier.dynamic.showDetails=true"
       - "traefik.http.middlewares.ml-sablier.plugin.sablier.dynamic.theme=ghost"
       - "traefik.http.routers.ml-frontend.rule=Host(`lending-club.theo-eloy.fr`)"
-      - "traefik.http.routers.ml-frontend.tls=true"
-      - "traefik.http.routers.ml-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-frontend.middlewares=ml-sablier"
       - "traefik.http.services.ml-frontend.loadbalancer.server.port=8501"
     depends_on:
@@ -209,15 +205,13 @@ services:
       airflow-init:
         condition: service_completed_successfully
     ports:
-      - "${AIRFLOW_PORT:-8080}:8080"
+      - "127.0.0.1:${AIRFLOW_PORT:-8080}:8080"
     networks:
       - default
       - web
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ml-airflow.rule=Host(`lending-club.theo-eloy.fr`) && PathPrefix(`/airflow`)"
-      - "traefik.http.routers.ml-airflow.tls=true"
-      - "traefik.http.routers.ml-airflow.tls.certresolver=letsencrypt"
       - "traefik.http.routers.ml-airflow.middlewares="
       - "traefik.http.services.ml-airflow.loadbalancer.server.port=8080"
     command: webserver
